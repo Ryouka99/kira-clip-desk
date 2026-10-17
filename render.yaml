@@ -1,6 +1,7 @@
 services:
   - type: web
     name: kira-clip-desk
+    plan: free
     runtime: python
     buildCommand: pip install -r requirements.txt
     startCommand: python server.py
