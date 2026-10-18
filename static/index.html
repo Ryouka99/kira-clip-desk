@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=25">
-    <script src="/app.js?v=25" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=26">
+    <script src="/app.js?v=26" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -93,7 +93,18 @@
             </div>
             <div class="batch-controls" aria-label="Synchronized batch playback">
               <button type="button" class="batch-play" id="batch-play"><span aria-hidden="true">▶</span> PLAY TOGETHER</button>
-              <button type="button" class="batch-pause" id="batch-pause"><span aria-hidden="true">Ⅱ</span> PAUSE</button>
+              <button type="button" class="batch-pause" id="batch-pause"><span aria-hidden="true">Ⅱ</span> PAUSE ALL</button>
+              <label class="playback-speed" for="playback-speed">
+                <span>CLIP SPEED</span>
+                <select id="playback-speed" aria-label="Playback speed for focused clip">
+                  <option value="0.5">0.5×</option>
+                  <option value="0.75">0.75×</option>
+                  <option value="1" selected>1×</option>
+                  <option value="1.25">1.25×</option>
+                  <option value="1.5">1.5×</option>
+                  <option value="2">2×</option>
+                </select>
+              </label>
               <label class="batch-seek-wrap" for="batch-seek">
                 <span id="batch-clock">00:00</span>
                 <input id="batch-seek" type="range" min="0" max="0" value="0" step="1" disabled>
@@ -102,9 +113,9 @@
               <span class="batch-sync-note">SHARED TIMELINE</span>
             </div>
             <p class="keyboard-hint" aria-label="Keyboard shortcuts">
-              <span><kbd>Space</kbd><span>Play / pause</span></span>
-              <span><kbd>←</kbd><kbd>→</kbd><span>Seek ±5s</span></span>
-              <span><kbd>↑</kbd><kbd>↓</kbd><span>Move focus</span></span>
+              <span><kbd>Space</kbd><span>Play / pause focused clip</span></span>
+              <span><kbd>←</kbd><kbd>→</kbd><span>Seek focused clip ±5s</span></span>
+              <span><kbd>↑</kbd><kbd>↓</kbd><span>Change focused clip</span></span>
             </p>
             <div class="overview-grid" id="overview-grid" role="group" aria-label="Review clips" tabindex="-1"></div>
           </section>

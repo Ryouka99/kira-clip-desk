@@ -15,6 +15,7 @@ const batchPauseButton = document.querySelector("#batch-pause");
 const batchSeek = document.querySelector("#batch-seek");
 const batchClock = document.querySelector("#batch-clock");
 const batchDuration = document.querySelector("#batch-duration");
+const playbackSpeed = document.querySelector("#playback-speed");
 const clipItems = [];
 let nextClipId = 1;
 let batchSyncTimer = null;
@@ -64,18 +65,22 @@ function updateBatchControls() {
 }
 
 function updateBatchClock() {
-  const firstVideo = getPreviewVideos()[0];
-  if (!firstVideo || !Number.isFinite(firstVideo.currentTime)) {
+  const reference = getFocusedVideo() || getPreviewVideos()[0];
+  if (!reference || !Number.isFinite(reference.currentTime)) {
     batchClock.textContent = "00:00";
     batchSeek.value = "0";
     return;
   }
-  batchClock.textContent = formatDuration(firstVideo.currentTime);
-  batchSeek.value = String(Math.round(firstVideo.currentTime * 10));
+  batchClock.textContent = formatDuration(reference.currentTime);
+  batchSeek.value = String(Math.round(reference.currentTime * 10));
+}
+
+function getFocusedVideo(videos = getPreviewVideos()) {
+  return videos.find((video) => video.closest(".overview-card")?.dataset.clipId === focusedClipId) || null;
 }
 
 function getBatchReferenceVideo(videos = getPreviewVideos()) {
-  const focusedVideo = videos.find((video) => video.closest(".overview-card")?.dataset.clipId === focusedClipId);
+  const focusedVideo = getFocusedVideo(videos);
   return focusedVideo || videos.find((video) => !video.paused && !video.ended) || videos[0] || null;
 }
 
@@ -93,8 +98,10 @@ async function playBatch() {
   const reference = getBatchReferenceVideo(videos);
   if (!reference) return;
   const startTime = reference.currentTime || 0;
+  const speed = Number(playbackSpeed.value);
   await Promise.all(videos.map(async (video) => {
     if (Number.isFinite(video.duration)) video.currentTime = Math.min(startTime, video.duration);
+    video.playbackRate = speed;
     try {
       await video.play();
     } catch {
@@ -104,13 +111,18 @@ async function playBatch() {
   startBatchSync();
 }
 
-function toggleBatchPlayback() {
-  const videos = getPreviewVideos();
-  if (!videos.length) return;
-  if (videos.some((video) => !video.paused && !video.ended)) {
-    pauseBatch();
-  } else {
-    playBatch();
+async function toggleFocusedPlayback() {
+  const video = getFocusedVideo();
+  if (!video) return;
+  stopBatchSync();
+  if (!video.paused && !video.ended) {
+    video.pause();
+    return;
+  }
+  try {
+    await video.play();
+  } catch {
+    setStatus("This clip could not start. Use its on-player controls to try again.", "error");
   }
 }
 
@@ -169,6 +181,9 @@ function renderOverview() {
   dropZone.hidden = total > 0;
   updateOverviewCount(ready, total);
   overviewGrid.replaceChildren();
+  if (!clipItems.some((item) => item.id === focusedClipId && item.status === "ready")) {
+    focusedClipId = clipItems.find((item) => item.status === "ready")?.id || null;
+  }
 
   clipItems.forEach((item, index) => {
     const card = document.createElement("article");
@@ -186,6 +201,11 @@ function renderOverview() {
       preview.playsInline = true;
       preview.preload = "metadata";
       preview.setAttribute("aria-label", `Preview ${item.title}`);
+      preview.addEventListener("pointerdown", () => {
+        focusedClipId = item.id;
+        stopBatchSync();
+        syncFocusView();
+      });
       preview.addEventListener("loadedmetadata", () => {
         item.duration = preview.duration;
         updateBatchControls();
@@ -227,11 +247,12 @@ function renderOverview() {
     focusButton.type = "button";
     focusButton.className = "overview-focus";
     focusButton.disabled = item.status !== "ready";
-    focusButton.textContent = item.id === focusedClipId ? "FOCUSED" : "FOCUS";
+    focusButton.textContent = item.id === focusedClipId ? "IN FOCUS" : "FOCUS";
     focusButton.setAttribute("aria-pressed", String(item.id === focusedClipId));
     focusButton.addEventListener("click", () => {
-      focusedClipId = focusedClipId === item.id ? null : item.id;
+      focusedClipId = item.id;
       syncFocusView();
+      overviewGrid.focus({ preventScroll: true });
     });
     footer.append(identity, focusButton);
     card.append(media, footer);
@@ -253,10 +274,13 @@ function syncFocusView() {
     const isFocused = card.dataset.clipId === focusedClipId;
     card.setAttribute("aria-current", String(isFocused));
     const button = card.querySelector(".overview-focus");
-    button.textContent = isFocused ? "FOCUSED" : "FOCUS";
+    button.textContent = isFocused ? "IN FOCUS" : "FOCUS";
     button.setAttribute("aria-pressed", String(isFocused));
     const video = card.querySelector("video");
     if (video) video.muted = !isFocused;
+  }
+  if (playbackSpeed) {
+    playbackSpeed.value = String(getFocusedVideo()?.playbackRate || 1);
   }
 }
 
@@ -439,17 +463,30 @@ batchSeek.addEventListener("input", () => {
   seekBatchTo(time);
 });
 
+playbackSpeed.addEventListener("change", () => {
+  const speed = Number(playbackSpeed.value);
+  if (!Number.isFinite(speed) || speed <= 0) return;
+  const videos = batchSyncTimer === null
+    ? [getFocusedVideo()].filter(Boolean)
+    : getPreviewVideos();
+  for (const video of videos) video.playbackRate = speed;
+});
+
 document.addEventListener("keydown", (event) => {
   if (!clipItems.length || isTypingOrUsingControl(event.target, event.key)) return;
   if (event.code === "Space") {
     event.preventDefault();
-    toggleBatchPlayback();
+    toggleFocusedPlayback();
   } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-    const reference = getBatchReferenceVideo();
+    const reference = getFocusedVideo();
     if (!reference || !Number.isFinite(reference.duration)) return;
     event.preventDefault();
     const direction = event.key === "ArrowRight" ? 1 : -1;
-    seekBatchTo(reference.currentTime + direction * 5);
+    reference.currentTime = Math.max(0, Math.min(
+      reference.currentTime + direction * 5,
+      reference.duration,
+    ));
+    updateBatchClock();
   } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
     event.preventDefault();
     moveFocusedClip(event.key === "ArrowDown" ? 1 : -1, event.target);
