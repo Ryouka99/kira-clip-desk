@@ -219,12 +219,21 @@ function moveFocusedClip(direction, target) {
   });
 }
 
+function reorderFocusedClip(direction) {
+  if (!focusedClipId) return;
+  const card = overviewGrid.querySelector(`[data-clip-id="${CSS.escape(focusedClipId)}"]`);
+  const button = card?.querySelector(direction < 0
+    ? ".overview-move[title='Move clip up']"
+    : ".overview-move[title='Move clip down']");
+  if (button && !button.disabled) moveClip(focusedClipId, direction, button);
+}
+
 function isTypingOrUsingControl(target, key) {
   if (!(target instanceof Element)) return false;
   if (target.closest("input, textarea, select, a, video, [contenteditable='true'], [role='slider']")) return true;
   const button = target.closest("button");
   if (!button) return false;
-  return !(["ArrowUp", "ArrowDown"].includes(key) && button.matches(".overview-focus"));
+  return !(["ArrowUp", "ArrowDown"].includes(key) && button.matches(".overview-focus, .overview-move"));
 }
 
 function clearQueue() {
@@ -648,6 +657,9 @@ document.addEventListener("keydown", (event) => {
       reference.duration,
     ));
     updateBatchClock();
+  } else if (event.altKey && (event.key === "ArrowUp" || event.key === "ArrowDown")) {
+    event.preventDefault();
+    reorderFocusedClip(event.key === "ArrowUp" ? -1 : 1);
   } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
     event.preventDefault();
     moveFocusedClip(event.key === "ArrowDown" ? 1 : -1, event.target);
