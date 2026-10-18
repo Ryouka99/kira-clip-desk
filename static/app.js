@@ -16,20 +16,85 @@ const batchSeek = document.querySelector("#batch-seek");
 const batchClock = document.querySelector("#batch-clock");
 const batchDuration = document.querySelector("#batch-duration");
 const playbackSpeed = document.querySelector("#playback-speed");
+const reviewTab = document.querySelector("#tab-review");
+const installTab = document.querySelector("#tab-install");
+const reviewPanel = document.querySelector("#review-panel");
+const installPanel = document.querySelector("#install-panel");
+const installButton = document.querySelector("#install-button");
+const installStatus = document.querySelector("#install-status");
+const installHelp = document.querySelector(".install-help");
 const clipItems = [];
 let nextClipId = 1;
 let batchSyncTimer = null;
 let focusedClipId = null;
+let deferredInstallPrompt = null;
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.getRegistrations()
-    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
-    .then(() => caches.keys())
-    .then((keys) => Promise.all(
-      keys.filter((key) => key.startsWith("kira-clip-desk-shell-")).map((key) => caches.delete(key)),
-    ))
-    .catch((error) => console.error("Could not remove the old offline app shell.", error));
+  navigator.serviceWorker.register("/service-worker.js")
+    .catch((error) => console.error("Could not register the Kira Clip Desk app shell.", error));
 }
+
+function selectWorkspaceTab(tab) {
+  const showReview = tab === reviewTab;
+  reviewTab.setAttribute("aria-selected", String(showReview));
+  reviewTab.tabIndex = showReview ? 0 : -1;
+  reviewPanel.hidden = !showReview;
+  installTab.setAttribute("aria-selected", String(!showReview));
+  installTab.tabIndex = showReview ? -1 : 0;
+  installPanel.hidden = showReview;
+}
+
+for (const tab of [reviewTab, installTab]) {
+  tab.addEventListener("click", () => selectWorkspaceTab(tab));
+  tab.addEventListener("keydown", (event) => {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    const nextTab = tab === reviewTab ? installTab : reviewTab;
+    selectWorkspaceTab(nextTab);
+    nextTab.focus();
+  });
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  deferredInstallPrompt = event;
+  installStatus.textContent = "Kira is ready to install on this device.";
+});
+
+window.addEventListener("appinstalled", () => {
+  deferredInstallPrompt = null;
+  installButton.disabled = true;
+  installButton.textContent = "KIRA CLIP DESK INSTALLED";
+  installStatus.textContent = "Kira is installed and ready in its own window.";
+});
+
+if (window.matchMedia("(display-mode: standalone)").matches || navigator.standalone === true) {
+  installButton.disabled = true;
+  installButton.textContent = "KIRA CLIP DESK INSTALLED";
+  installStatus.textContent = "Kira is already open as an installed app.";
+}
+
+installButton.addEventListener("click", async () => {
+  if (!deferredInstallPrompt) {
+    installStatus.textContent = "Your browser does not offer the install prompt here. Use the steps below to add Kira.";
+    installHelp.open = true;
+    return;
+  }
+
+  const prompt = deferredInstallPrompt;
+  deferredInstallPrompt = null;
+  try {
+    await prompt.prompt();
+    const choice = await prompt.userChoice;
+    installStatus.textContent = choice.outcome === "accepted"
+      ? "Kira is installing. Find it in your desktop or app menu."
+      : "No problem. Kira will stay available in your browser.";
+  } catch (error) {
+    console.error("Could not open the Kira Clip Desk install prompt.", error);
+    installStatus.textContent = "The install prompt could not open. Use the browser menu steps below.";
+    installHelp.open = true;
+  }
+});
 
 function setStatus(message, kind = "") {
   statusLine.textContent = message;

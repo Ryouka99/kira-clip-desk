@@ -223,6 +223,36 @@ main {
   flex-direction: column;
 }
 .desktop-only { display: none; }
+.workspace-tabs {
+  margin-top: 14px;
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid var(--line);
+}
+.workspace-tab {
+  position: relative;
+  min-height: 40px;
+  padding: 0 15px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 9px 9px 0 0;
+  background: transparent;
+  color: #8f999b;
+  font: 9px var(--mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color .16s ease, background .16s ease, border-color .16s ease;
+}
+.workspace-tab:hover { color: var(--ink); }
+.workspace-tab[aria-selected="true"] {
+  border-color: rgba(126, 231, 214, 0.26);
+  background: linear-gradient(180deg, rgba(126, 231, 214, 0.09), rgba(126, 231, 214, 0.025));
+  color: var(--cyan);
+}
+.workspace-tab:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+.page-panel { flex: 1; }
+.page-panel[hidden], .install-panel[hidden] { display: none; }
 
 .intro {
   min-height: 72px;
@@ -637,6 +667,63 @@ h1 i {
 .batch-active .overview-title { font-size: 12px; }
 .batch-active .overview-metadata { margin-top: 3px; font-size: 9px; }
 
+.install-panel {
+  min-height: calc(100vh - 190px);
+  padding: 34px 0 42px;
+  display: flex;
+  flex-direction: column;
+}
+.install-hero {
+  padding: 10px 0 30px;
+  border-bottom: 1px solid var(--line);
+}
+.install-hero h1 { font-size: clamp(46px, 6vw, 72px); }
+.install-hero .intro-description { max-width: 650px; font-size: 14px; }
+.install-action {
+  min-height: 44px;
+  margin-top: 22px;
+  padding: 0 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid rgba(126, 231, 214, 0.55);
+  border-radius: 9px;
+  background: linear-gradient(135deg, rgba(126, 231, 214, 0.18), rgba(126, 231, 214, 0.06));
+  box-shadow: 0 8px 25px rgba(126, 231, 214, 0.08), inset 0 1px 0 rgba(255,255,255,0.07);
+  color: var(--cyan);
+  font: 9px var(--mono);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: transform .16s ease, border-color .16s ease, background .16s ease;
+}
+.install-action:hover:not(:disabled) { transform: translateY(-1px); border-color: var(--cyan); background: rgba(126, 231, 214, 0.14); }
+.install-action:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
+.install-action:disabled { opacity: .75; cursor: default; }
+.install-action > span { font-size: 16px; }
+.install-status { min-height: 18px; margin: 12px 0 0; color: var(--muted); font: 9px var(--mono); }
+.install-benefits { padding: 24px 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.install-benefit {
+  min-height: 142px;
+  padding: 17px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(155deg, rgba(20, 25, 27, 0.9), rgba(11, 14, 16, 0.88));
+  box-shadow: var(--shadow-soft);
+}
+.install-index { color: var(--cyan); font: 8px var(--mono); letter-spacing: 0.12em; }
+.install-benefit h2 { margin: 16px 0 6px; color: var(--ink); font: 600 20px/.95 var(--display); text-transform: uppercase; }
+.install-benefit p { max-width: 320px; margin: 0; color: var(--muted); font-size: 11px; line-height: 1.55; }
+.install-help {
+  align-self: flex-start;
+  max-width: 700px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.install-help summary { color: #d7dddd; font: 9px var(--mono); cursor: pointer; }
+.install-help p { margin: 10px 0 0; }
+.install-help b { color: var(--ink); font-weight: 600; }
+
 @media (min-width: 901px) and (max-width: 1199px) {
   .overview-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
@@ -695,7 +782,6 @@ h1 i {
   color: #8e989b;
   font-size: 8px;
 }
-.page-footer b { color: var(--red); }
 .page-credit {
   min-height: 32px;
   padding: 0 14px;
@@ -737,6 +823,8 @@ button:focus-visible, .file-label:focus-visible { outline: 2px solid var(--red);
   .overview-actions { align-items: flex-end; flex-direction: column; gap: 6px; }
   .batch-sync-note { display: none; }
   .keyboard-hint { gap: 6px 12px; font-size: 8px; }
+  .install-benefits { grid-template-columns: 1fr; }
+  .install-benefit { min-height: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {
