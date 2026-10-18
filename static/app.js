@@ -5,9 +5,6 @@ const loadButton = document.querySelector("#load-button");
 const fileInput = document.querySelector("#video-file");
 const dropZone = document.querySelector("#drop-zone");
 const mainColumn = document.querySelector(".main-column");
-const installButton = document.querySelector("#install-app");
-const installStatus = document.querySelector("#install-status");
-const tabs = Array.from(document.querySelectorAll('[role="tab"][aria-controls]'));
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
 const overviewGrid = document.querySelector("#overview-grid");
@@ -21,77 +18,15 @@ const clipItems = [];
 let nextClipId = 1;
 let batchSyncTimer = null;
 let focusedClipId = null;
-let installPrompt = null;
-const installTabStatus = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
 if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("/service-worker.js")
-    .catch((error) => console.error("Could not register the offline app shell.", error));
-}
-
-window.addEventListener("beforeinstallprompt", (event) => {
-  event.preventDefault();
-  installPrompt = event;
-  installStatus.textContent = "Ready to install. Select Install app to add it to your device.";
-});
-
-installButton.addEventListener("click", async () => {
-  if (!installPrompt) {
-    installStatus.textContent = "Open your browser menu and choose Install Kira Clip Desk, or Add to Home Screen on mobile.";
-    return;
-  }
-  installButton.disabled = true;
-  try {
-    await installPrompt.prompt();
-    const choice = await installPrompt.userChoice;
-    installPrompt = null;
-    installStatus.textContent = choice.outcome === "accepted"
-      ? "Kira Clip Desk is installing. Look for it in your apps."
-      : "No problem. You can install it anytime from your browser menu.";
-  } catch (error) {
-    console.error("Could not open the app installation prompt.", error);
-    installStatus.textContent = "Could not open the install prompt. Use your browser menu to install the app.";
-  } finally {
-    installButton.disabled = false;
-  }
-});
-
-window.addEventListener("appinstalled", () => {
-  installPrompt = null;
-  installButton.disabled = true;
-  installButton.textContent = "Installed";
-  installStatus.textContent = "Kira Clip Desk is installed and ready to launch from your apps.";
-});
-
-function selectTab(tab, { focus = false } = {}) {
-  for (const candidate of tabs) {
-    const selected = candidate === tab;
-    candidate.setAttribute("aria-selected", String(selected));
-    candidate.tabIndex = selected ? 0 : -1;
-    document.getElementById(candidate.getAttribute("aria-controls")).hidden = !selected;
-  }
-  if (focus) tab.focus();
-}
-
-for (const tab of tabs) {
-  tab.addEventListener("click", () => selectTab(tab));
-  tab.addEventListener("keydown", (event) => {
-    const currentIndex = tabs.indexOf(tab);
-    let nextIndex;
-    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
-    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
-    else if (event.key === "Home") nextIndex = 0;
-    else if (event.key === "End") nextIndex = tabs.length - 1;
-    else return;
-    event.preventDefault();
-    selectTab(tabs[nextIndex], { focus: true });
-  });
-}
-
-if (installTabStatus) {
-  installButton.disabled = true;
-  installButton.textContent = "Installed";
-  installStatus.textContent = "Kira Clip Desk is installed and ready to launch from your apps.";
+  navigator.serviceWorker.getRegistrations()
+    .then((registrations) => Promise.all(registrations.map((registration) => registration.unregister())))
+    .then(() => caches.keys())
+    .then((keys) => Promise.all(
+      keys.filter((key) => key.startsWith("kira-clip-desk-shell-")).map((key) => caches.delete(key)),
+    ))
+    .catch((error) => console.error("Could not remove the old offline app shell.", error));
 }
 
 function setStatus(message, kind = "") {
