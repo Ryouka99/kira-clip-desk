@@ -3,6 +3,7 @@ const urlInput = document.querySelector("#medal-url");
 const pasteButton = document.querySelector("#paste-button");
 const loadButton = document.querySelector("#load-button");
 const fileInput = document.querySelector("#video-file");
+const dropZone = document.querySelector("#drop-zone");
 const mainColumn = document.querySelector(".main-column");
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
@@ -78,6 +79,7 @@ function renderOverview() {
   const ready = clipItems.filter((item) => item.status === "ready").length;
   document.body.classList.toggle("batch-active", total > 0);
   clipOverview.hidden = total === 0;
+  dropZone.hidden = total > 0;
   overviewCount.textContent = `${String(ready).padStart(2, "0")} / ${String(total).padStart(2, "0")} READY`;
   overviewGrid.replaceChildren();
 
@@ -289,16 +291,18 @@ fileInput.addEventListener("change", () => {
   fileInput.value = "";
 });
 
+dropZone.addEventListener("click", () => fileInput.click());
+
 for (const eventName of ["dragenter", "dragover"]) {
   mainColumn.addEventListener(eventName, (event) => {
     event.preventDefault();
-    mainColumn.classList.add("dragging");
+    dropZone.classList.add("dragging");
   });
 }
 for (const eventName of ["dragleave", "drop"]) {
   mainColumn.addEventListener(eventName, (event) => {
     event.preventDefault();
-    mainColumn.classList.remove("dragging");
+    dropZone.classList.remove("dragging");
   });
 }
 mainColumn.addEventListener("drop", (event) => addLocalFiles(event.dataTransfer.files));

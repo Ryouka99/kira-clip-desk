@@ -3,15 +3,24 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#f3f5f0">
+    <meta name="theme-color" content="#090b0d">
     <title>Kira Clip Desk</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=11">
-    <script src="/app.js?v=12" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=16">
+    <script src="/app.js?v=14" defer></script>
   </head>
   <body>
+    <div class="intro-screen" aria-hidden="true">
+      <div class="intro-screen-content">
+        <span class="intro-screen-mark">K</span>
+        <p class="intro-screen-kicker">LOCAL FOOTAGE REVIEW SYSTEM</p>
+        <p class="intro-screen-title">KIRA <span>SIGNAL DESK</span></p>
+        <div class="intro-screen-loader"><span></span></div>
+        <p class="intro-screen-caption">INITIALIZING WORKSPACE</p>
+      </div>
+    </div>
     <section class="desktop-only" id="desktop-only" aria-labelledby="desktop-only-title">
       <span class="mono-label">KIRA CLIP DESK / PC MODE</span>
       <h1 id="desktop-only-title">Open on a <span>desktop</span></h1>
@@ -30,11 +39,16 @@
 
     <main>
       <section class="intro" aria-labelledby="page-title">
-        <div>
+        <div class="intro-copy">
           <p class="eyebrow"><span>CASE FILE 001</span><span class="eyebrow-rule"></span><span>ROBLOX / DEATH NOTE</span></p>
           <h1 id="page-title">Kira <i>signal</i> desk</h1>
         </div>
-        <p class="intro-note">HUMAN BATCH REVIEW</p>
+        <div class="intro-side">
+          <div class="signal-pill" aria-label="workspace status">
+            <span class="signal-pill-label">LIVE</span>
+            <span class="signal-pill-value">BATCH REVIEW</span>
+          </div>
+        </div>
       </section>
 
       <section class="workspace" aria-label="Clip workspace">
@@ -52,6 +66,17 @@
               <input class="visually-hidden" id="video-file" type="file" accept="video/*" multiple>
             </div>
           </form>
+
+          <button class="drop-zone" id="drop-zone" type="button" aria-label="Choose video clips or drop them here">
+            <span class="drop-zone-icon" aria-hidden="true">
+              <svg viewBox="0 0 48 48" fill="none">
+                <path d="M24 31V9m0 0-8 8m8-8 8 8M10 28v9a3 3 0 0 0 3 3h22a3 3 0 0 0 3-3v-9" />
+              </svg>
+            </span>
+            <span class="drop-zone-title">Drop video clips here</span>
+            <span class="drop-zone-copy">or click to browse your files</span>
+            <span class="drop-zone-formats">VIDEO FILES · MULTI-SELECT SUPPORTED</span>
+          </button>
 
           <section class="clip-overview" id="clip-overview" aria-label="All clip previews" hidden>
             <div class="overview-heading">
@@ -78,6 +103,7 @@
 
       <footer class="page-footer">
         <span>DEATH NOTE / xBEAR STUDIOS</span>
+        <span class="page-credit"><span class="credit-spark" aria-hidden="true">✳</span><span class="credit-copy">MADE BY <b>DRACOO</b></span></span>
         <span>CLIP DESK <b>·</b> 2026</span>
       </footer>
     </main>
