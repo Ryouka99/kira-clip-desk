@@ -9,8 +9,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=21">
-    <script src="/app.js?v=19" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=22">
+    <script src="/app.js?v=20" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -41,12 +41,13 @@
     <main>
       <section class="intro" aria-labelledby="page-title">
         <div class="intro-copy">
-          <p class="eyebrow"><span>CASE FILE 001</span><span class="eyebrow-rule"></span><span>ROBLOX / DEATH NOTE</span></p>
-          <h1 id="page-title">Kira <i>signal</i> desk</h1>
+          <p class="eyebrow"><span>MEDAL LINKS + LOCAL VIDEO</span><span class="eyebrow-rule"></span><span>ONE REVIEW SESSION</span></p>
+          <h1 id="page-title">Review the <i>whole round</i></h1>
+          <p class="intro-description">Bring every angle into one desk. Compare clips in sync, then focus on the moment that matters.</p>
         </div>
         <div class="intro-side">
           <div class="signal-pill" aria-label="workspace status">
-            <span class="signal-pill-label">LIVE</span>
+            <span class="signal-pill-label">MODE</span>
             <span class="signal-pill-value">BATCH REVIEW</span>
           </div>
         </div>
@@ -55,11 +56,11 @@
       <section class="workspace" aria-label="Clip workspace">
         <div class="main-column">
           <form class="link-form" id="link-form">
-            <label for="medal-url">MEDAL CLIP LINKS <span class="label-hint">ONE LINK PER LINE</span></label>
+            <label for="medal-url">ADD CLIPS TO YOUR REVIEW <span class="label-hint">ONE MEDAL LINK PER LINE</span></label>
             <div class="input-row">
               <textarea id="medal-url" name="urls" rows="2" autocomplete="off" placeholder="Paste one or more Medal links, one per line" spellcheck="false"></textarea>
               <button class="button button-paste" id="paste-button" type="button" title="Paste a link from your clipboard">Paste</button>
-              <button class="button button-load" id="load-button" type="submit">Load clips <span aria-hidden="true">↗</span></button>
+              <button class="button button-load" id="load-button" type="submit">Add to review <span aria-hidden="true">↗</span></button>
             </div>
             <div class="form-foot">
               <p class="status-line" id="status-line" role="status" aria-live="polite">Paste several links, choose multiple videos, or drop clips below.</p>
@@ -75,27 +76,30 @@
               </svg>
             </span>
             <span class="drop-zone-title">Drop video clips here</span>
-            <span class="drop-zone-copy">or click to browse your files</span>
+            <span class="drop-zone-copy">Choose several at once. Local videos stay on your device.</span>
             <span class="drop-zone-formats">VIDEO FILES · MULTI-SELECT SUPPORTED</span>
           </button>
 
           <section class="clip-overview" id="clip-overview" aria-label="All clip previews" hidden>
             <div class="overview-heading">
               <div>
-                <p class="mono-label">BATCH VIEW</p>
-                <h2>All clips</h2>
+                <p class="mono-label">YOUR REVIEW SESSION</p>
+                <h2>Review queue</h2>
               </div>
-              <span class="overview-count" id="overview-count">00 READY</span>
+              <div class="overview-actions">
+                <span class="overview-count" id="overview-count">0 clips</span>
+                <button class="clear-batch" id="clear-batch" type="button">Clear batch</button>
+              </div>
             </div>
             <div class="batch-controls" aria-label="Synchronized batch playback">
-              <button type="button" class="batch-play" id="batch-play">PLAY ALL</button>
-              <button type="button" class="batch-pause" id="batch-pause">PAUSE ALL</button>
+              <button type="button" class="batch-play" id="batch-play"><span aria-hidden="true">▶</span> PLAY TOGETHER</button>
+              <button type="button" class="batch-pause" id="batch-pause"><span aria-hidden="true">Ⅱ</span> PAUSE</button>
               <label class="batch-seek-wrap" for="batch-seek">
                 <span id="batch-clock">00:00</span>
                 <input id="batch-seek" type="range" min="0" max="0" value="0" step="1" disabled>
                 <span id="batch-duration">--:--</span>
               </label>
-              <span class="batch-sync-note">SHARED SEEK</span>
+              <span class="batch-sync-note">SHARED TIMELINE</span>
             </div>
             <div class="overview-grid" id="overview-grid"></div>
           </section>

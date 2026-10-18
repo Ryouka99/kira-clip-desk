@@ -9,6 +9,7 @@ const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
 const overviewGrid = document.querySelector("#overview-grid");
 const overviewCount = document.querySelector("#overview-count");
+const clearBatchButton = document.querySelector("#clear-batch");
 const batchPlayButton = document.querySelector("#batch-play");
 const batchPauseButton = document.querySelector("#batch-pause");
 const batchSeek = document.querySelector("#batch-seek");
@@ -90,7 +91,7 @@ function renderOverview() {
   document.body.classList.toggle("batch-active", total > 0);
   clipOverview.hidden = total === 0;
   dropZone.hidden = total > 0;
-  overviewCount.textContent = `${String(ready).padStart(2, "0")} / ${String(total).padStart(2, "0")} READY`;
+  updateOverviewCount(ready, total);
   overviewGrid.replaceChildren();
 
   clipItems.forEach((item, index) => {
@@ -164,6 +165,12 @@ function renderOverview() {
   updateBatchControls();
 }
 
+function updateOverviewCount(ready = clipItems.filter((item) => item.status === "ready").length, total = clipItems.length) {
+  overviewCount.textContent = total === 1
+    ? `${ready} of 1 clip ready`
+    : `${ready} of ${total} clips ready`;
+}
+
 function syncFocusView() {
   const cards = Array.from(overviewGrid.querySelectorAll(".overview-card"));
   for (const card of cards) {
@@ -211,24 +218,26 @@ async function resolveClip(item) {
 }
 
 async function loadMedalLinks(urls) {
-  clearQueue();
+  const queuedItems = [];
   for (const url of urls) {
-    clipItems.push({
+    const item = {
       id: `clip-${nextClipId++}`,
       url,
       title: url,
       sourceLabel: "MEDAL CLIP",
       status: "queued",
-    });
+    };
+    queuedItems.push(item);
+    clipItems.push(item);
   }
   renderOverview();
   setBusy(true);
-  setStatus(`Resolving ${urls.length} clips in parallel.`);
+  setStatus(`Adding ${urls.length} Medal ${urls.length === 1 ? "clip" : "clips"} to this review.`);
 
   let nextIndex = 0;
   const worker = async () => {
-    while (nextIndex < clipItems.length) {
-      const item = clipItems[nextIndex++];
+    while (nextIndex < queuedItems.length) {
+      const item = queuedItems[nextIndex++];
       await resolveClip(item);
     }
   };
@@ -236,11 +245,11 @@ async function loadMedalLinks(urls) {
   await Promise.all(workers);
   setBusy(false);
 
-  const loaded = clipItems.filter((item) => item.status === "ready").length;
-  const failed = clipItems.length - loaded;
+  const loaded = queuedItems.filter((item) => item.status === "ready").length;
+  const failed = queuedItems.length - loaded;
   renderOverview();
   setStatus(
-    `${loaded} of ${clipItems.length} clips ready for review.${failed ? ` ${failed} failed; unavailable clips are marked in the grid.` : " Use Play All or control each clip independently."}`,
+    `${loaded} of ${queuedItems.length} new ${queuedItems.length === 1 ? "clip" : "clips"} ready.${failed ? ` ${failed} could not be loaded and are marked in the queue.` : " Your new clips are added to this review session."}`,
     failed ? "error" : "",
   );
 }
@@ -256,7 +265,6 @@ function addLocalFiles(files) {
     return;
   }
 
-  clearQueue();
   for (const file of videos) {
     const objectUrl = URL.createObjectURL(file);
     clipItems.push({
@@ -270,7 +278,7 @@ function addLocalFiles(files) {
     });
   }
   renderOverview();
-  setStatus(`${videos.length} local ${videos.length === 1 ? "clip" : "clips"} ready in the batch view.`);
+  setStatus(`${videos.length} local ${videos.length === 1 ? "clip" : "clips"} added to this review.`);
 }
 
 form.addEventListener("submit", async (event) => {
@@ -282,6 +290,7 @@ form.addEventListener("submit", async (event) => {
     return;
   }
   loadButton.disabled = true;
+  urlInput.value = "";
   await loadMedalLinks(urls);
 });
 
@@ -299,6 +308,13 @@ pasteButton.addEventListener("click", async () => {
 fileInput.addEventListener("change", () => {
   addLocalFiles(fileInput.files);
   fileInput.value = "";
+});
+
+clearBatchButton.addEventListener("click", () => {
+  clearQueue();
+  urlInput.value = "";
+  setStatus("Batch cleared. Add Medal links or local videos to start a new review.");
+  urlInput.focus();
 });
 
 dropZone.addEventListener("click", () => fileInput.click());
