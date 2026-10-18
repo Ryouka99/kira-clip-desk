@@ -319,12 +319,108 @@ function renderOverview() {
       syncFocusView();
       overviewGrid.focus({ preventScroll: true });
     });
-    footer.append(identity, focusButton);
+    const actions = document.createElement("div");
+    actions.className = "overview-card-actions";
+    actions.setAttribute("role", "group");
+    actions.setAttribute("aria-label", `Actions for ${item.title}`);
+
+    const moveUpButton = document.createElement("button");
+    moveUpButton.type = "button";
+    moveUpButton.className = "overview-move";
+    moveUpButton.textContent = "↑";
+    moveUpButton.title = "Move clip up";
+    moveUpButton.setAttribute("aria-label", `Move ${item.title} up`);
+    moveUpButton.disabled = index === 0;
+    moveUpButton.addEventListener("click", () => moveClip(item.id, -1, moveUpButton));
+
+    const moveDownButton = document.createElement("button");
+    moveDownButton.type = "button";
+    moveDownButton.className = "overview-move";
+    moveDownButton.textContent = "↓";
+    moveDownButton.title = "Move clip down";
+    moveDownButton.setAttribute("aria-label", `Move ${item.title} down`);
+    moveDownButton.disabled = index === clipItems.length - 1;
+    moveDownButton.addEventListener("click", () => moveClip(item.id, 1, moveDownButton));
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.className = "overview-remove";
+    removeButton.textContent = "×";
+    removeButton.title = "Remove clip from review";
+    removeButton.setAttribute("aria-label", `Remove ${item.title} from review`);
+    removeButton.addEventListener("click", () => removeClip(item.id));
+
+    actions.append(moveUpButton, moveDownButton, removeButton, focusButton);
+    footer.append(identity, actions);
     card.append(media, footer);
     overviewGrid.append(card);
   });
   syncFocusView();
   updateBatchControls();
+}
+
+function updateClipPositions() {
+  const cards = Array.from(overviewGrid.querySelectorAll(".overview-card"));
+  cards.forEach((card, index) => {
+    card.querySelector(".overview-number").textContent = String(index + 1).padStart(2, "0");
+    card.querySelector(".overview-move[title='Move clip up']").disabled = index === 0;
+    card.querySelector(".overview-move[title='Move clip down']").disabled = index === cards.length - 1;
+  });
+}
+
+function moveClip(clipId, direction, button) {
+  const currentIndex = clipItems.findIndex((item) => item.id === clipId);
+  const nextIndex = currentIndex + direction;
+  if (currentIndex < 0 || nextIndex < 0 || nextIndex >= clipItems.length) return;
+
+  const [item] = clipItems.splice(currentIndex, 1);
+  clipItems.splice(nextIndex, 0, item);
+
+  const card = overviewGrid.querySelector(`[data-clip-id="${CSS.escape(clipId)}"]`);
+  const neighbor = card?.nextElementSibling;
+  if (direction < 0) {
+    overviewGrid.insertBefore(card, card.previousElementSibling);
+  } else if (neighbor) {
+    overviewGrid.insertBefore(neighbor, card);
+  } else {
+    overviewGrid.append(card);
+  }
+  updateClipPositions();
+  button.focus({ preventScroll: true });
+  setStatus(`Moved ${item.title} ${direction < 0 ? "up" : "down"} in the review queue.`);
+}
+
+function removeClip(clipId) {
+  const index = clipItems.findIndex((item) => item.id === clipId);
+  if (index < 0) return;
+  const [item] = clipItems.splice(index, 1);
+  const video = overviewGrid.querySelector(`[data-clip-id="${CSS.escape(clipId)}"] video`);
+  video?.pause();
+  if (item.objectUrl) URL.revokeObjectURL(item.objectUrl);
+
+  if (focusedClipId === clipId) {
+    focusedClipId = clipItems.slice(index).find((candidate) => candidate.status === "ready")?.id
+      || clipItems.slice(0, index).reverse().find((candidate) => candidate.status === "ready")?.id
+      || null;
+  }
+
+  if (!clipItems.length) {
+    renderOverview();
+    urlInput.focus();
+    setStatus("Clip removed. Add more clips to continue reviewing.");
+    return;
+  }
+
+  overviewGrid.querySelector(`[data-clip-id="${CSS.escape(clipId)}"]`)?.remove();
+  syncFocusView();
+  updateClipPositions();
+  updateOverviewCount();
+  updateBatchControls();
+  if (!getPreviewVideos().some((preview) => !preview.paused && !preview.ended)) {
+    stopBatchSync();
+  }
+  overviewGrid.querySelector(`[data-clip-id="${CSS.escape(focusedClipId || "")}"] .overview-focus`)?.focus({ preventScroll: true });
+  setStatus(`Removed ${item.title} from the review queue.`);
 }
 
 function updateOverviewCount(ready = clipItems.filter((item) => item.status === "ready").length, total = clipItems.length) {

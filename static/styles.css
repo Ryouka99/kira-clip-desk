@@ -621,6 +621,26 @@ h1 i {
 .overview-details { min-width: 0; }
 .overview-title { overflow: hidden; margin: 0; color: #e7e8e8; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .overview-metadata { overflow: hidden; margin: 3px 0 0; color: #858b8d; font: 9px var(--mono); text-overflow: ellipsis; white-space: nowrap; }
+.overview-card-actions { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 4px; }
+.overview-move, .overview-remove {
+  width: 27px;
+  height: 28px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid rgba(176, 182, 188, 0.22);
+  border-radius: 7px;
+  background: rgba(255,255,255,0.025);
+  color: #aeb8ba;
+  font: 12px var(--mono);
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease, opacity .15s ease;
+}
+.overview-move:hover:not(:disabled) { border-color: rgba(126, 231, 214, 0.55); background: rgba(126, 231, 214, 0.08); color: var(--cyan); }
+.overview-remove { color: #c39094; font-size: 17px; }
+.overview-remove:hover { border-color: rgba(237, 119, 127, 0.55); background: rgba(237, 119, 127, 0.09); color: #ff9ca3; }
+.overview-move:disabled { opacity: .3; cursor: default; }
+.overview-move:focus-visible, .overview-remove:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .overview-focus {
   flex: 0 0 auto;
   padding: 8px 10px;
