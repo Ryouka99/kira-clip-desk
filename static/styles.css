@@ -204,6 +204,21 @@ button { color: inherit; }
   letter-spacing: 0.16em;
   text-transform: uppercase;
 }
+.install-button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 1px solid rgba(126, 231, 214, 0.38);
+  border-radius: 8px;
+  background: rgba(126, 231, 214, 0.08);
+  color: var(--cyan);
+  font: 9px var(--mono);
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: background-color .16s ease, border-color .16s ease;
+}
+.install-button:hover { border-color: rgba(126, 231, 214, 0.7); background: rgba(126, 231, 214, 0.14); }
+.install-button:disabled { opacity: .55; cursor: wait; }
+.install-button[hidden] { display: none; }
 .connection-dot, .state-dot {
   width: 9px;
   height: 9px;

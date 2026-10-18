@@ -5,6 +5,7 @@ const loadButton = document.querySelector("#load-button");
 const fileInput = document.querySelector("#video-file");
 const dropZone = document.querySelector("#drop-zone");
 const mainColumn = document.querySelector(".main-column");
+const installButton = document.querySelector("#install-app");
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
 const overviewGrid = document.querySelector("#overview-grid");
@@ -18,6 +19,40 @@ const clipItems = [];
 let nextClipId = 1;
 let batchSyncTimer = null;
 let focusedClipId = null;
+let installPrompt = null;
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/service-worker.js")
+    .catch((error) => console.error("Could not register the offline app shell.", error));
+}
+
+window.addEventListener("beforeinstallprompt", (event) => {
+  event.preventDefault();
+  installPrompt = event;
+  installButton.hidden = false;
+});
+
+installButton.addEventListener("click", async () => {
+  if (!installPrompt) return;
+  installButton.disabled = true;
+  try {
+    await installPrompt.prompt();
+    await installPrompt.userChoice;
+    installPrompt = null;
+    installButton.hidden = true;
+  } catch (error) {
+    console.error("Could not open the app installation prompt.", error);
+    setStatus("App installation could not be started. Use your browser's install option.", "error");
+  } finally {
+    installButton.disabled = false;
+  }
+});
+
+window.addEventListener("appinstalled", () => {
+  installPrompt = null;
+  installButton.hidden = true;
+  setStatus("Kira Clip Desk was installed successfully.");
+});
 
 function setStatus(message, kind = "") {
   statusLine.textContent = message;

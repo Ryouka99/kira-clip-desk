@@ -5,11 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#090b0d">
     <title>Kira Clip Desk</title>
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Kira Clip Desk">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=16">
-    <script src="/app.js?v=14" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=18">
+    <script src="/app.js?v=16" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -32,6 +37,7 @@
         <span>KIRA <b>CLIP DESK</b></span>
       </a>
       <div class="topbar-right">
+        <button class="install-button" id="install-app" type="button" hidden>INSTALL APP</button>
         <span class="connection-dot" aria-hidden="true"></span>
         <span>LOCAL WORKSPACE</span>
       </div>
