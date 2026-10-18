@@ -6,6 +6,8 @@ const fileInput = document.querySelector("#video-file");
 const dropZone = document.querySelector("#drop-zone");
 const mainColumn = document.querySelector(".main-column");
 const installButton = document.querySelector("#install-app");
+const installStatus = document.querySelector("#install-status");
+const tabs = Array.from(document.querySelectorAll('[role="tab"][aria-controls]'));
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
 const overviewGrid = document.querySelector("#overview-grid");
@@ -20,6 +22,7 @@ let nextClipId = 1;
 let batchSyncTimer = null;
 let focusedClipId = null;
 let installPrompt = null;
+const installTabStatus = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js")
@@ -29,20 +32,25 @@ if ("serviceWorker" in navigator) {
 window.addEventListener("beforeinstallprompt", (event) => {
   event.preventDefault();
   installPrompt = event;
-  installButton.hidden = false;
+  installStatus.textContent = "Ready to install. Select Install app to add it to your device.";
 });
 
 installButton.addEventListener("click", async () => {
-  if (!installPrompt) return;
+  if (!installPrompt) {
+    installStatus.textContent = "Open your browser menu and choose Install Kira Clip Desk, or Add to Home Screen on mobile.";
+    return;
+  }
   installButton.disabled = true;
   try {
     await installPrompt.prompt();
-    await installPrompt.userChoice;
+    const choice = await installPrompt.userChoice;
     installPrompt = null;
-    installButton.hidden = true;
+    installStatus.textContent = choice.outcome === "accepted"
+      ? "Kira Clip Desk is installing. Look for it in your apps."
+      : "No problem. You can install it anytime from your browser menu.";
   } catch (error) {
     console.error("Could not open the app installation prompt.", error);
-    setStatus("App installation could not be started. Use your browser's install option.", "error");
+    installStatus.textContent = "Could not open the install prompt. Use your browser menu to install the app.";
   } finally {
     installButton.disabled = false;
   }
@@ -50,9 +58,41 @@ installButton.addEventListener("click", async () => {
 
 window.addEventListener("appinstalled", () => {
   installPrompt = null;
-  installButton.hidden = true;
-  setStatus("Kira Clip Desk was installed successfully.");
+  installButton.disabled = true;
+  installButton.textContent = "Installed";
+  installStatus.textContent = "Kira Clip Desk is installed and ready to launch from your apps.";
 });
+
+function selectTab(tab, { focus = false } = {}) {
+  for (const candidate of tabs) {
+    const selected = candidate === tab;
+    candidate.setAttribute("aria-selected", String(selected));
+    candidate.tabIndex = selected ? 0 : -1;
+    document.getElementById(candidate.getAttribute("aria-controls")).hidden = !selected;
+  }
+  if (focus) tab.focus();
+}
+
+for (const tab of tabs) {
+  tab.addEventListener("click", () => selectTab(tab));
+  tab.addEventListener("keydown", (event) => {
+    const currentIndex = tabs.indexOf(tab);
+    let nextIndex;
+    if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
+    else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    else if (event.key === "Home") nextIndex = 0;
+    else if (event.key === "End") nextIndex = tabs.length - 1;
+    else return;
+    event.preventDefault();
+    selectTab(tabs[nextIndex], { focus: true });
+  });
+}
+
+if (installTabStatus) {
+  installButton.disabled = true;
+  installButton.textContent = "Installed";
+  installStatus.textContent = "Kira Clip Desk is installed and ready to launch from your apps.";
+}
 
 function setStatus(message, kind = "") {
   statusLine.textContent = message;

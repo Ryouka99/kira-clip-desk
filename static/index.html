@@ -13,8 +13,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=18">
-    <script src="/app.js?v=16" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=20">
+    <script src="/app.js?v=18" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -37,13 +37,18 @@
         <span>KIRA <b>CLIP DESK</b></span>
       </a>
       <div class="topbar-right">
-        <button class="install-button" id="install-app" type="button" hidden>INSTALL APP</button>
         <span class="connection-dot" aria-hidden="true"></span>
         <span>LOCAL WORKSPACE</span>
       </div>
     </header>
 
+    <nav class="view-tabs" role="tablist" aria-label="Workspace sections">
+      <button class="view-tab" id="review-tab" type="button" role="tab" aria-selected="true" aria-controls="review-view" tabindex="0">REVIEW DESK</button>
+      <button class="view-tab" id="install-tab" type="button" role="tab" aria-selected="false" aria-controls="install-view" tabindex="-1">INSTALL APP</button>
+    </nav>
+
     <main>
+      <section class="view-panel" id="review-view" role="tabpanel" aria-labelledby="review-tab">
       <section class="intro" aria-labelledby="page-title">
         <div class="intro-copy">
           <p class="eyebrow"><span>CASE FILE 001</span><span class="eyebrow-rule"></span><span>ROBLOX / DEATH NOTE</span></p>
@@ -104,6 +109,57 @@
             </div>
             <div class="overview-grid" id="overview-grid"></div>
           </section>
+        </div>
+      </section>
+
+      </section>
+
+      <section class="view-panel install-view" id="install-view" role="tabpanel" aria-labelledby="install-tab" hidden>
+        <header class="install-intro">
+          <p class="eyebrow"><span>YOUR WORKSPACE</span><span class="eyebrow-rule"></span><span>READY WHEN YOU ARE</span></p>
+          <h1>Take Kira <i>with you</i></h1>
+          <p class="install-lead">Install Clip Desk for a focused, app-like workspace that opens right from your desktop or home screen.</p>
+        </header>
+
+        <section class="install-benefits" aria-label="Benefits of installing Kira Clip Desk">
+          <article class="install-benefit">
+            <span class="install-benefit-index">01</span>
+            <h2>Opens like an app</h2>
+            <p>Launch in its own window, without the extra browser tabs and address bar.</p>
+          </article>
+          <article class="install-benefit">
+            <span class="install-benefit-index">02</span>
+            <h2>Review local clips fast</h2>
+            <p>Open Clip Desk and drop video files straight into your batch review.</p>
+          </article>
+          <article class="install-benefit">
+            <span class="install-benefit-index">03</span>
+            <h2>Keep the app shell handy</h2>
+            <p>The interface can open offline after its first load. Medal links and streaming still need internet.</p>
+          </article>
+        </section>
+
+        <section class="install-guide" aria-labelledby="install-guide-title">
+          <div class="install-guide-copy">
+            <p class="mono-label">QUICK SETUP</p>
+            <h2 id="install-guide-title">Make it yours</h2>
+            <p>Installation is free and takes just a moment. Your local video files stay on your device.</p>
+          </div>
+          <div class="install-guide-action">
+            <button class="install-button" id="install-app" type="button">Install app <span aria-hidden="true">↗</span></button>
+            <p class="install-status" id="install-status" role="status" aria-live="polite">Use Chrome or Edge's install prompt, or follow the browser steps below.</p>
+          </div>
+        </section>
+
+        <div class="install-steps" aria-label="Manual installation instructions">
+          <article class="install-step">
+            <span class="install-step-icon" aria-hidden="true">01</span>
+            <div><h3>Chrome or Edge</h3><p>Choose the install icon in the address bar, or open the browser menu and select <strong>Install Kira Clip Desk</strong>.</p></div>
+          </article>
+          <article class="install-step">
+            <span class="install-step-icon" aria-hidden="true">02</span>
+            <div><h3>Phone or tablet</h3><p>Open this site in your browser menu and choose <strong>Add to Home Screen</strong>.</p></div>
+          </article>
         </div>
       </section>
 

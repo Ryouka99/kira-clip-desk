@@ -15,7 +15,7 @@ Open http://127.0.0.1:8000. The Medal resolver accepts public links in the `/gam
 
 ## Install as an App
 
-On a supported desktop browser, open the hosted HTTPS site and use **Install App** when it appears, or choose the browser's install option from its menu. On mobile, use the browser's **Add to Home Screen** option. The app shell can open offline after it has been loaded once; resolving Medal links and streaming clips still requires an internet connection.
+On a supported desktop browser, open the hosted HTTPS site, select the **Install App** tab, then choose **Install app** or follow the browser-specific steps. On mobile, use the browser's **Add to Home Screen** option. The app shell can open offline after it has been loaded once; resolving Medal links and streaming clips still requires an internet connection.
 
 ## Public Hosting
 
