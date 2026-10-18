@@ -74,6 +74,71 @@ function updateBatchClock() {
   batchSeek.value = String(Math.round(firstVideo.currentTime * 10));
 }
 
+function getBatchReferenceVideo(videos = getPreviewVideos()) {
+  const focusedVideo = videos.find((video) => video.closest(".overview-card")?.dataset.clipId === focusedClipId);
+  return focusedVideo || videos.find((video) => !video.paused && !video.ended) || videos[0] || null;
+}
+
+function seekBatchTo(time) {
+  for (const video of getPreviewVideos()) {
+    if (Number.isFinite(video.duration)) {
+      video.currentTime = Math.max(0, Math.min(time, video.duration));
+    }
+  }
+  updateBatchClock();
+}
+
+async function playBatch() {
+  const videos = getPreviewVideos();
+  const reference = getBatchReferenceVideo(videos);
+  if (!reference) return;
+  const startTime = reference.currentTime || 0;
+  await Promise.all(videos.map(async (video) => {
+    if (Number.isFinite(video.duration)) video.currentTime = Math.min(startTime, video.duration);
+    try {
+      await video.play();
+    } catch {
+      setStatus("A preview could not start. Use its individual play control.", "error");
+    }
+  }));
+  startBatchSync();
+}
+
+function toggleBatchPlayback() {
+  const videos = getPreviewVideos();
+  if (!videos.length) return;
+  if (videos.some((video) => !video.paused && !video.ended)) {
+    pauseBatch();
+  } else {
+    playBatch();
+  }
+}
+
+function pauseBatch() {
+  for (const video of getPreviewVideos()) video.pause();
+  stopBatchSync();
+}
+
+function moveFocusedClip(direction) {
+  const readyItems = clipItems.filter((item) => item.status === "ready");
+  if (!readyItems.length) return;
+  const currentIndex = readyItems.findIndex((item) => item.id === focusedClipId);
+  const nextIndex = currentIndex < 0
+    ? (direction > 0 ? 0 : readyItems.length - 1)
+    : (currentIndex + direction + readyItems.length) % readyItems.length;
+  focusedClipId = readyItems[nextIndex].id;
+  syncFocusView();
+  overviewGrid.querySelector(`[data-clip-id="${CSS.escape(focusedClipId)}"]`)?.scrollIntoView({
+    block: "nearest",
+    behavior: "smooth",
+  });
+}
+
+function isTypingOrUsingControl(target) {
+  if (!(target instanceof Element)) return false;
+  return Boolean(target.closest("input, textarea, select, button, a, video, [contenteditable='true'], [role='slider']"));
+}
+
 function clearQueue() {
   stopBatchSync();
   for (const video of getPreviewVideos()) video.pause();
@@ -359,29 +424,28 @@ function startBatchSync() {
   }, 250);
 }
 
-batchPlayButton.addEventListener("click", async () => {
-  const videos = getPreviewVideos();
-  const startTime = videos[0]?.currentTime || 0;
-  await Promise.all(videos.map(async (video) => {
-    if (Number.isFinite(video.duration)) video.currentTime = Math.min(startTime, video.duration);
-    try {
-      await video.play();
-    } catch {
-      setStatus("A preview could not start. Use its individual play control.", "error");
-    }
-  }));
-  startBatchSync();
-});
+batchPlayButton.addEventListener("click", playBatch);
 
-batchPauseButton.addEventListener("click", () => {
-  for (const video of getPreviewVideos()) video.pause();
-  stopBatchSync();
-});
+batchPauseButton.addEventListener("click", pauseBatch);
 
 batchSeek.addEventListener("input", () => {
   const time = Number(batchSeek.value) / 10;
-  for (const video of getPreviewVideos()) {
-    if (Number.isFinite(video.duration)) video.currentTime = Math.min(time, video.duration);
+  seekBatchTo(time);
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!clipItems.length || isTypingOrUsingControl(event.target)) return;
+  if (event.code === "Space") {
+    event.preventDefault();
+    toggleBatchPlayback();
+  } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+    const reference = getBatchReferenceVideo();
+    if (!reference || !Number.isFinite(reference.duration)) return;
+    event.preventDefault();
+    const direction = event.key === "ArrowRight" ? 1 : -1;
+    seekBatchTo(reference.currentTime + direction * 5);
+  } else if (event.key === "ArrowUp" || event.key === "ArrowDown") {
+    event.preventDefault();
+    moveFocusedClip(event.key === "ArrowDown" ? 1 : -1);
   }
-  batchClock.textContent = formatDuration(time);
 });
