@@ -23,11 +23,28 @@ const installPanel = document.querySelector("#install-panel");
 const installButton = document.querySelector("#install-button");
 const installStatus = document.querySelector("#install-status");
 const installHelp = document.querySelector(".install-help");
+const zoomDialog = document.querySelector("#zoom-dialog");
+const zoomTitle = document.querySelector("#zoom-title");
+const zoomStage = document.querySelector("#zoom-stage");
+const zoomVideoSlot = document.querySelector("#zoom-video-slot");
+const zoomCloseButton = document.querySelector("#zoom-close");
+const zoomOutButton = document.querySelector("#zoom-out");
+const zoomInButton = document.querySelector("#zoom-in");
+const zoomResetButton = document.querySelector("#zoom-reset");
+const zoomLevel = document.querySelector("#zoom-level");
+const zoomReadout = document.querySelector("#zoom-readout");
 const clipItems = [];
 let nextClipId = 1;
 let batchSyncTimer = null;
 let focusedClipId = null;
 let deferredInstallPrompt = null;
+let zoomedVideo = null;
+let zoomOrigin = null;
+let zoomTrigger = null;
+let zoomScale = 1;
+let zoomPanX = 0;
+let zoomPanY = 0;
+let zoomDrag = null;
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js")
@@ -101,6 +118,124 @@ function setStatus(message, kind = "") {
   statusLine.dataset.kind = kind;
 }
 
+function updateZoomTransform() {
+  zoomVideoSlot.style.setProperty("--zoom-scale", String(zoomScale));
+  zoomVideoSlot.style.setProperty("--zoom-pan-x", `${zoomPanX}px`);
+  zoomVideoSlot.style.setProperty("--zoom-pan-y", `${zoomPanY}px`);
+  zoomLevel.value = String(zoomScale);
+  zoomReadout.textContent = `${zoomScale.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}×`;
+  zoomOutButton.disabled = zoomScale <= 1;
+  zoomInButton.disabled = zoomScale >= 3;
+  zoomResetButton.disabled = zoomScale === 1 && zoomPanX === 0 && zoomPanY === 0;
+}
+
+function setZoomScale(value) {
+  zoomScale = Math.max(1, Math.min(3, value));
+  if (zoomScale === 1) {
+    zoomPanX = 0;
+    zoomPanY = 0;
+  }
+  updateZoomTransform();
+}
+
+function closeZoomView() {
+  if (zoomDialog.open) {
+    zoomDialog.close();
+    finishZoomView();
+    return;
+  }
+  if (!zoomedVideo) return;
+  finishZoomView();
+}
+
+function finishZoomView() {
+  if (zoomedVideo && zoomOrigin) {
+    zoomOrigin.append(zoomedVideo);
+    zoomOrigin.classList.remove("is-zooming");
+  }
+  zoomVideoSlot.replaceChildren();
+  zoomedVideo = null;
+  zoomOrigin = null;
+  zoomPanX = 0;
+  zoomPanY = 0;
+  zoomDrag = null;
+  updateZoomTransform();
+  zoomTrigger?.focus({ preventScroll: true });
+  zoomTrigger = null;
+}
+
+function openZoomView(item, video, origin, trigger) {
+  if (zoomDialog.open) closeZoomView();
+  focusedClipId = item.id;
+  syncFocusView();
+  zoomedVideo = video;
+  zoomOrigin = origin;
+  zoomTrigger = trigger;
+  zoomTitle.textContent = item.title;
+  zoomScale = 1;
+  zoomPanX = 0;
+  zoomPanY = 0;
+  origin.classList.add("is-zooming");
+  zoomVideoSlot.append(video);
+  updateZoomTransform();
+  zoomDialog.showModal();
+  zoomCloseButton.focus();
+}
+
+function panZoomVideo(deltaX, deltaY) {
+  const bounds = zoomStage.getBoundingClientRect();
+  const maxX = bounds.width * (zoomScale - 1) / 2;
+  const maxY = bounds.height * (zoomScale - 1) / 2;
+  zoomPanX = Math.max(-maxX, Math.min(maxX, zoomPanX + deltaX));
+  zoomPanY = Math.max(-maxY, Math.min(maxY, zoomPanY + deltaY));
+  updateZoomTransform();
+}
+
+zoomDialog.addEventListener("close", finishZoomView);
+zoomDialog.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  event.preventDefault();
+  closeZoomView();
+});
+zoomDialog.addEventListener("cancel", (event) => {
+  event.preventDefault();
+  closeZoomView();
+});
+zoomCloseButton.addEventListener("click", closeZoomView);
+zoomOutButton.addEventListener("click", () => setZoomScale(zoomScale - 0.25));
+zoomInButton.addEventListener("click", () => setZoomScale(zoomScale + 0.25));
+zoomResetButton.addEventListener("click", () => {
+  zoomPanX = 0;
+  zoomPanY = 0;
+  setZoomScale(1);
+});
+zoomLevel.addEventListener("input", () => setZoomScale(Number(zoomLevel.value)));
+zoomDialog.addEventListener("click", (event) => {
+  if (event.target === zoomDialog) closeZoomView();
+});
+zoomStage.addEventListener("wheel", (event) => {
+  event.preventDefault();
+  setZoomScale(zoomScale + (event.deltaY < 0 ? 0.25 : -0.25));
+}, { passive: false });
+zoomStage.addEventListener("pointerdown", (event) => {
+  if (!event.shiftKey || zoomScale <= 1) return;
+  event.preventDefault();
+  zoomDrag = { x: event.clientX, y: event.clientY };
+  zoomStage.setPointerCapture(event.pointerId);
+  zoomStage.classList.add("is-panning");
+});
+zoomStage.addEventListener("pointermove", (event) => {
+  if (!zoomDrag) return;
+  panZoomVideo(event.clientX - zoomDrag.x, event.clientY - zoomDrag.y);
+  zoomDrag = { x: event.clientX, y: event.clientY };
+});
+function endZoomPan() {
+  zoomDrag = null;
+  zoomStage.classList.remove("is-panning");
+}
+zoomStage.addEventListener("pointerup", endZoomPan);
+zoomStage.addEventListener("pointercancel", endZoomPan);
+
 function formatDuration(seconds) {
   if (!Number.isFinite(seconds)) return "Length unavailable";
   const minutes = Math.floor(seconds / 60);
@@ -109,7 +244,7 @@ function formatDuration(seconds) {
 }
 
 function getPreviewVideos() {
-  return Array.from(overviewGrid.querySelectorAll(".overview-media video"));
+  return Array.from(document.querySelectorAll(".overview-media video, #zoom-video-slot video"));
 }
 
 function updateBatchControls() {
@@ -141,7 +276,7 @@ function updateBatchClock() {
 }
 
 function getFocusedVideo(videos = getPreviewVideos()) {
-  return videos.find((video) => video.closest(".overview-card")?.dataset.clipId === focusedClipId) || null;
+  return videos.find((video) => video.dataset.clipId === focusedClipId) || null;
 }
 
 function getBatchReferenceVideo(videos = getPreviewVideos()) {
@@ -202,7 +337,7 @@ function moveFocusedClip(direction, target) {
   const activeItem = target instanceof Element
     ? target.closest(".overview-card")?.dataset.clipId
     : null;
-  const playingItem = getBatchReferenceVideo()?.closest(".overview-card")?.dataset.clipId;
+  const playingItem = getBatchReferenceVideo()?.dataset.clipId;
   const currentIndex = [activeItem, focusedClipId, playingItem]
     .filter(Boolean)
     .map((id) => readyItems.findIndex((item) => item.id === id))
@@ -237,6 +372,7 @@ function isTypingOrUsingControl(target, key) {
 }
 
 function clearQueue() {
+  closeZoomView();
   stopBatchSync();
   for (const video of getPreviewVideos()) video.pause();
   for (const item of clipItems) {
@@ -248,6 +384,7 @@ function clearQueue() {
 }
 
 function renderOverview() {
+  closeZoomView();
   const total = clipItems.length;
   const ready = clipItems.filter((item) => item.status === "ready").length;
   document.body.classList.toggle("batch-active", total > 0);
@@ -270,6 +407,7 @@ function renderOverview() {
     if (item.status === "ready") {
       const preview = document.createElement("video");
       preview.src = item.videoUrl;
+      preview.dataset.clipId = item.id;
       preview.controls = true;
       preview.muted = item.id !== focusedClipId;
       preview.playsInline = true;
@@ -290,6 +428,13 @@ function renderOverview() {
       preview.addEventListener("durationchange", updateBatchControls);
       preview.addEventListener("timeupdate", updateBatchClock);
       media.append(preview);
+      const zoomButton = document.createElement("button");
+      zoomButton.type = "button";
+      zoomButton.className = "overview-zoom";
+      zoomButton.textContent = "ZOOM";
+      zoomButton.setAttribute("aria-label", `Zoom in on ${item.title}`);
+      zoomButton.addEventListener("click", () => openZoomView(item, preview, media, zoomButton));
+      media.append(zoomButton);
     } else {
       const unavailable = document.createElement("span");
       unavailable.className = "overview-unavailable";
@@ -402,6 +547,7 @@ function moveClip(clipId, direction, button) {
 function removeClip(clipId) {
   const index = clipItems.findIndex((item) => item.id === clipId);
   if (index < 0) return;
+  if (zoomedVideo?.dataset.clipId === clipId) closeZoomView();
   const [item] = clipItems.splice(index, 1);
   const video = overviewGrid.querySelector(`[data-clip-id="${CSS.escape(clipId)}"] video`);
   video?.pause();
@@ -643,6 +789,13 @@ playbackSpeed.addEventListener("change", () => {
 });
 
 document.addEventListener("keydown", (event) => {
+  if (zoomDialog.open) {
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeZoomView();
+    }
+    return;
+  }
   if (!clipItems.length || isTypingOrUsingControl(event.target, event.key)) return;
   if (event.code === "Space") {
     event.preventDefault();

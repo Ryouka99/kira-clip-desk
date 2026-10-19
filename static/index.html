@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=29">
-    <script src="/app.js?v=29" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=31">
+    <script src="/app.js?v=31" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -162,6 +162,31 @@
           <p>In Chrome or Edge on desktop, open the browser menu and choose <b>Install Kira Clip Desk</b> or <b>Apps → Install this site as an app</b>. In Safari on macOS, choose <b>File → Add to Dock</b>.</p>
         </details>
       </section>
+
+      <dialog class="zoom-dialog" id="zoom-dialog" aria-labelledby="zoom-title">
+        <div class="zoom-shell">
+          <header class="zoom-header">
+            <div class="zoom-heading">
+              <span class="zoom-kicker">CLIP DETAIL VIEW</span>
+              <h2 id="zoom-title"></h2>
+            </div>
+            <button class="zoom-close" id="zoom-close" type="button" aria-label="Close zoom view">×</button>
+          </header>
+          <div class="zoom-stage" id="zoom-stage">
+            <div class="zoom-video-slot" id="zoom-video-slot"></div>
+          </div>
+          <footer class="zoom-controls">
+            <span class="zoom-pan-hint">SCROLL TO ZOOM · SHIFT + DRAG TO PAN</span>
+            <div class="zoom-adjust">
+              <button class="zoom-step" id="zoom-out" type="button" aria-label="Zoom out">−</button>
+              <input id="zoom-level" type="range" min="1" max="3" step="0.25" value="1" aria-label="Zoom level">
+              <button class="zoom-step" id="zoom-in" type="button" aria-label="Zoom in">＋</button>
+              <output id="zoom-readout" for="zoom-level">1×</output>
+              <button class="zoom-reset" id="zoom-reset" type="button">RESET</button>
+            </div>
+          </footer>
+        </div>
+      </dialog>
 
       <footer class="page-footer">
         <span class="page-credit"><span class="credit-spark" aria-hidden="true">✳</span><span class="credit-copy">MADE BY <b>DRACOO</b></span></span>
