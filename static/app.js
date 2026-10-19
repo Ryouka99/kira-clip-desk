@@ -368,6 +368,16 @@ function reorderFocusedClip(direction) {
   if (button && !button.disabled) moveClip(focusedClipId, direction, button);
 }
 
+function zoomFocusedClip() {
+  const item = clipItems.find((candidate) => candidate.id === focusedClipId && candidate.status === "ready");
+  if (!item) return;
+  const card = overviewGrid.querySelector(`[data-clip-id="${CSS.escape(item.id)}"]`);
+  const video = card?.querySelector(".overview-media video");
+  const trigger = card?.querySelector(".overview-zoom");
+  const media = video?.closest(".overview-media");
+  if (video && trigger && media) openZoomView(item, video, media, trigger);
+}
+
 function isTypingOrUsingControl(target, key) {
   if (!(target instanceof Element)) return false;
   if (target.closest("input, textarea, select, a, video, [contenteditable='true'], [role='slider']")) return true;
@@ -838,6 +848,9 @@ document.addEventListener("keydown", (event) => {
   if (event.code === "Space") {
     event.preventDefault();
     toggleFocusedPlayback();
+  } else if (!event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === "z") {
+    event.preventDefault();
+    zoomFocusedClip();
   } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
     const reference = getFocusedVideo();
     if (!reference || !Number.isFinite(reference.duration)) return;

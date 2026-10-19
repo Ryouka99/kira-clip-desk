@@ -1,8 +1,8 @@
-const CACHE_NAME = "kira-clip-desk-shell-v9";
+const CACHE_NAME = "kira-clip-desk-shell-v10";
 const APP_SHELL = [
   "/",
-  "/styles.css?v=35",
-  "/app.js?v=35",
+  "/styles.css?v=36",
+  "/app.js?v=36",
   "/manifest.webmanifest",
   "/icon.svg",
   "/icon-192.png",
