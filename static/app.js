@@ -4,6 +4,7 @@ const pasteButton = document.querySelector("#paste-button");
 const loadButton = document.querySelector("#load-button");
 const fileInput = document.querySelector("#video-file");
 const dropZone = document.querySelector("#drop-zone");
+const queueDropTarget = document.querySelector("#queue-drop-target");
 const mainColumn = document.querySelector(".main-column");
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
@@ -395,6 +396,7 @@ function renderOverview() {
   document.body.classList.toggle("batch-active", total > 0);
   clipOverview.hidden = total === 0;
   dropZone.hidden = total > 0;
+  queueDropTarget.hidden = total === 0;
   updateOverviewCount(ready, total);
   overviewGrid.replaceChildren();
   if (!clipItems.some((item) => item.id === focusedClipId && item.status === "ready")) {
@@ -608,7 +610,6 @@ function syncFocusView() {
 function setBusy(isBusy) {
   loadButton.disabled = isBusy;
   pasteButton.disabled = isBusy;
-  fileInput.disabled = isBusy;
 }
 
 async function resolveClip(item) {
@@ -671,10 +672,6 @@ async function loadMedalLinks(urls) {
 }
 
 function addLocalFiles(files) {
-  if (loadButton.disabled) {
-    setStatus("Wait for the current batch to finish before adding another.", "error");
-    return;
-  }
   const droppedFiles = Array.from(files);
   const videos = droppedFiles.filter((file) => {
     const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
@@ -741,6 +738,7 @@ clearBatchButton.addEventListener("click", () => {
 });
 
 dropZone.addEventListener("click", () => fileInput.click());
+queueDropTarget.addEventListener("click", () => fileInput.click());
 
 function isFileDrag(event) {
   return Array.from(event.dataTransfer?.types || []).includes("Files");
@@ -749,20 +747,26 @@ function isFileDrag(event) {
 function clearFileDragState() {
   dragDepth = 0;
   dropZone.classList.remove("dragging");
+  queueDropTarget.classList.remove("dragging");
+}
+
+function highlightFileDropTargets() {
+  dropZone.classList.add("dragging");
+  queueDropTarget.classList.add("dragging");
 }
 
 mainColumn.addEventListener("dragenter", (event) => {
   if (!isFileDrag(event)) return;
   event.preventDefault();
   dragDepth += 1;
-  dropZone.classList.add("dragging");
+  highlightFileDropTargets();
 });
 
 mainColumn.addEventListener("dragover", (event) => {
   if (!isFileDrag(event)) return;
   event.preventDefault();
   event.dataTransfer.dropEffect = "copy";
-  dropZone.classList.add("dragging");
+  highlightFileDropTargets();
 });
 
 mainColumn.addEventListener("dragleave", (event) => {

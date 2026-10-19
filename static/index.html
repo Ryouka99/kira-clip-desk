@@ -11,8 +11,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/styles.css?v=33">
-    <script src="/app.js?v=33" defer></script>
+    <link rel="stylesheet" href="/styles.css?v=34">
+    <script src="/app.js?v=34" defer></script>
   </head>
   <body>
     <div class="intro-screen" aria-hidden="true">
@@ -95,6 +95,9 @@
                   <h2>Review queue</h2>
                 </div>
                 <div class="overview-actions">
+                  <button class="queue-drop-target" id="queue-drop-target" type="button" aria-label="Choose videos or drop clips here to add them to this review">
+                    <span aria-hidden="true">＋</span> ADD / DROP VIDEOS
+                  </button>
                   <span class="overview-count" id="overview-count">0 clips</span>
                   <button class="clear-batch" id="clear-batch" type="button">Clear batch</button>
                 </div>
