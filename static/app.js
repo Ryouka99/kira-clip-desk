@@ -5,7 +5,6 @@ const loadButton = document.querySelector("#load-button");
 const fileInput = document.querySelector("#video-file");
 const dropZone = document.querySelector("#drop-zone");
 const queueDropTarget = document.querySelector("#queue-drop-target");
-const mainColumn = document.querySelector(".main-column");
 const statusLine = document.querySelector("#status-line");
 const clipOverview = document.querySelector("#clip-overview");
 const overviewGrid = document.querySelector("#overview-grid");
@@ -755,33 +754,33 @@ function highlightFileDropTargets() {
   queueDropTarget.classList.add("dragging");
 }
 
-mainColumn.addEventListener("dragenter", (event) => {
+window.addEventListener("dragenter", (event) => {
   if (!isFileDrag(event)) return;
   event.preventDefault();
   dragDepth += 1;
   highlightFileDropTargets();
-});
+}, true);
 
-mainColumn.addEventListener("dragover", (event) => {
+window.addEventListener("dragover", (event) => {
   if (!isFileDrag(event)) return;
   event.preventDefault();
   event.dataTransfer.dropEffect = "copy";
   highlightFileDropTargets();
-});
+}, true);
 
-mainColumn.addEventListener("dragleave", (event) => {
+window.addEventListener("dragleave", (event) => {
   if (!isFileDrag(event)) return;
   event.preventDefault();
   dragDepth = Math.max(0, dragDepth - 1);
-  if (dragDepth === 0) dropZone.classList.remove("dragging");
-});
+  if (dragDepth === 0) clearFileDragState();
+}, true);
 
-mainColumn.addEventListener("drop", (event) => {
+window.addEventListener("drop", (event) => {
   if (!isFileDrag(event) && !event.dataTransfer?.files.length) return;
   event.preventDefault();
   clearFileDragState();
   addLocalFiles(event.dataTransfer.files);
-});
+}, true);
 
 function stopBatchSync() {
   if (batchSyncTimer !== null) {
