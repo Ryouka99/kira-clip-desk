@@ -45,6 +45,11 @@ let zoomScale = 1;
 let zoomPanX = 0;
 let zoomPanY = 0;
 let zoomDrag = null;
+let dragDepth = 0;
+
+const videoFileExtensions = new Set([
+  ".3g2", ".3gp", ".avi", ".m4v", ".mkv", ".mov", ".mp4", ".ogg", ".ogv", ".webm",
+]);
 
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("/service-worker.js")
@@ -670,9 +675,13 @@ function addLocalFiles(files) {
     setStatus("Wait for the current batch to finish before adding another.", "error");
     return;
   }
-  const videos = Array.from(files).filter((file) => file.type.startsWith("video/"));
+  const droppedFiles = Array.from(files);
+  const videos = droppedFiles.filter((file) => {
+    const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
+    return file.type.startsWith("video/") || videoFileExtensions.has(extension);
+  });
   if (!videos.length) {
-    setStatus("Choose one or more supported video files.", "error");
+    setStatus("No video files found. Drop video clips or use Choose videos.", "error");
     return;
   }
 
@@ -689,7 +698,10 @@ function addLocalFiles(files) {
     });
   }
   renderOverview();
-  setStatus(`${videos.length} local ${videos.length === 1 ? "clip" : "clips"} added to this review.`);
+  const skipped = droppedFiles.length - videos.length;
+  setStatus(
+    `${videos.length} local ${videos.length === 1 ? "clip" : "clips"} added to this review.${skipped ? ` ${skipped} non-video ${skipped === 1 ? "file was" : "files were"} skipped.` : ""}`,
+  );
 }
 
 form.addEventListener("submit", async (event) => {
@@ -730,19 +742,42 @@ clearBatchButton.addEventListener("click", () => {
 
 dropZone.addEventListener("click", () => fileInput.click());
 
-for (const eventName of ["dragenter", "dragover"]) {
-  mainColumn.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropZone.classList.add("dragging");
-  });
+function isFileDrag(event) {
+  return Array.from(event.dataTransfer?.types || []).includes("Files");
 }
-for (const eventName of ["dragleave", "drop"]) {
-  mainColumn.addEventListener(eventName, (event) => {
-    event.preventDefault();
-    dropZone.classList.remove("dragging");
-  });
+
+function clearFileDragState() {
+  dragDepth = 0;
+  dropZone.classList.remove("dragging");
 }
-mainColumn.addEventListener("drop", (event) => addLocalFiles(event.dataTransfer.files));
+
+mainColumn.addEventListener("dragenter", (event) => {
+  if (!isFileDrag(event)) return;
+  event.preventDefault();
+  dragDepth += 1;
+  dropZone.classList.add("dragging");
+});
+
+mainColumn.addEventListener("dragover", (event) => {
+  if (!isFileDrag(event)) return;
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "copy";
+  dropZone.classList.add("dragging");
+});
+
+mainColumn.addEventListener("dragleave", (event) => {
+  if (!isFileDrag(event)) return;
+  event.preventDefault();
+  dragDepth = Math.max(0, dragDepth - 1);
+  if (dragDepth === 0) dropZone.classList.remove("dragging");
+});
+
+mainColumn.addEventListener("drop", (event) => {
+  if (!isFileDrag(event) && !event.dataTransfer?.files.length) return;
+  event.preventDefault();
+  clearFileDragState();
+  addLocalFiles(event.dataTransfer.files);
+});
 
 function stopBatchSync() {
   if (batchSyncTimer !== null) {
